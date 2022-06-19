@@ -1,0 +1,169 @@
+version: '3.9'
+
+networks:
+  novanet: { }
+
+services:
+  redis:
+    image: redislabs/redismod:preview
+    volumes:
+      - ../redis-server/redis.conf:/usr/local/etc/redis/redis.conf
+    ports:
+      - "6379:6379"
+    expose:
+      - 6379
+    networks:
+      - default
+
+  mongodb:
+    image: mongo
+    ports:
+      - "27017:27017"
+
+  rabbitmq:
+    image: rabbitmq
+    ports:
+      # AMQP protocol port
+      - '5672:5672'
+      # HTTP management UI
+      - '15672:15672'
+
+  api-gateways:
+    container_name: api-gateways
+    build:
+      context: ../../api-gateways/dev
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    links:
+      - services-display
+      - services-report
+      - services-schedule
+      - services-settings
+      - services-identity
+      - services-sharing
+    depends_on:
+      - services-display
+      - services-report
+      - services-schedule
+      - services-settings
+      - services-identity
+      - services-sharing
+  
+  services-display:
+    image: services-display
+    container_name: services-display
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Display/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=dev
+    restart: on-failure
+    ports:
+      - "5001:5001"
+    depends_on:
+      - redis
+      - rabbitmq
+      - mongodb
+        
+  services-identity:
+    image: services-identity
+    container_name: services-identity
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Identity/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=dev
+    restart: on-failure
+    ports:
+      - "5002:5002"
+    depends_on:
+      - redis
+      - rabbitmq
+  
+  services-report:
+    image: services-report
+    container_name: services-report
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Report/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=dev
+    restart: on-failure:5
+    ports:
+      - "5004:5004"
+    depends_on:
+      - redis
+      - rabbitmq
+  
+  services-schedule:
+    image: services-schedule
+    container_name: services-schedule
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Schedule/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=dev
+    restart: on-failure:5
+    ports:
+      - "5005:5005"
+    depends_on:
+      - redis
+      - rabbitmq
+
+  services-settings:
+    image: services-settings
+    container_name: services-settings
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Settings/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=dev
+    restart: on-failure:5
+    ports:
+      - "5006:5006"
+    depends_on: 
+      - redis
+      - rabbitmq
+
+  services-sharing:
+    image: services-sharing
+    container_name: services-sharing
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Sharing/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=dev
+    restart: on-failure
+    ports:
+      - "5007:5007"
+    depends_on:
+      - redis
+      - rabbitmq
+  
+  services-storage:
+    image: services-storage
+    container_name: services-storage
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Storage/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=dev
+    restart: on-failure:5
+    ports:
+      - "5008:5008"
+    depends_on:
+      - redis
+      - rabbitmq
+
+  prometheus:
+    image: quay.io/prometheus/prometheus:latest
+    depends_on:
+      - api-gateways
+    ports:
+      - "9090:9090"
+    volumes:
+      - ../prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - novanet
+    restart: always

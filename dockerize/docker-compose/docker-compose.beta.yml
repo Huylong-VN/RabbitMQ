@@ -1,0 +1,201 @@
+version: '3.4'
+
+services:
+  novanet-nginx:
+    container_name: novanet-nginx
+    build:
+      context: ../nginx-proxies/beta
+      dockerfile: Dockerfile
+    ports:
+      - "80:80"
+    restart: unless-stopped
+    links:
+      - novanet-beta
+    depends_on: 
+      - novanet-beta
+    networks:
+      - default
+  
+  novanet-beta-redis:
+    image: redis
+    hostname: novanet-beta-redis
+    container_name: novanet-beta-redis
+    ports:
+      - "6379:6379"
+    restart: unless-stopped
+    networks:
+      - default  
+  
+  novanet-beta-mongodb:
+    image: mongo
+    hostname: novanet-beta-mongodb
+    container_name: novanet-beta-mongodb
+    ports:
+      - "27017:27017"
+    restart: unless-stopped
+    networks:
+      - default
+  
+  novanet-beta-rabbitmq:
+    image: rabbitmq
+    hostname: novanet-beta-rabbitmq
+    container_name: novanet-beta-rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=novanet
+      - RABBITMQ_DEFAULT_PASS=43BFcSXH7zsZvweB
+    ports:
+      # AMQP protocol port
+      - '5672:5672'
+      # HTTP management UI
+      - '15672:15672'
+    restart: unless-stopped
+    networks:
+      - default
+
+  novanet-beta-client-manager:
+    container_name: novanet-beta-client-manager
+    build:
+      context: ../../..
+      dockerfile: src/app-clients/Client.Manager/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=beta
+    expose:
+      - "4200"
+    ports:
+      - "4200:4200"
+    restart: unless-stopped
+    networks:
+      - default
+    
+  novanet-beta-services-display:
+    container_name: novanet-beta-services-display
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Display/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=beta
+    expose:
+      - "5001"
+    ports:
+      - "5001:5001"
+    restart: unless-stopped
+    depends_on:
+      - novanet-beta-redis
+      - novanet-beta-rabbitmq
+      - novanet-beta-mongodb
+    networks:
+      - default
+        
+  novanet-beta-services-identity:
+    container_name: novanet-beta-services-identity
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Identity/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=beta
+    expose:
+      - "5002"
+    ports:
+      - "5002:5002"
+    restart: unless-stopped
+    depends_on:
+      - novanet-beta-redis
+      - novanet-beta-rabbitmq
+      - novanet-beta-mongodb
+    networks:
+      - default 
+        
+  novanet-beta-services-notification:
+    container_name: novanet-beta-services-notification
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Notification/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=beta
+    expose:
+      - "5003"
+    ports:
+      - "5003:5003"
+    restart: unless-stopped
+    depends_on:
+      - novanet-beta-redis
+      - novanet-beta-rabbitmq
+      - novanet-beta-mongodb
+    networks:
+      - default  
+        
+  novanet-beta-services-schedule:
+    container_name: novanet-beta-services-schedule
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Schedule/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=beta
+    expose:
+      - "5004"
+    ports:
+      - "5004:5004"
+    restart: unless-stopped
+    depends_on:
+      - novanet-beta-redis
+      - novanet-beta-rabbitmq
+      - novanet-beta-mongodb
+    networks:
+      - default  
+        
+  novanet-beta-services-settings:
+    container_name: novanet-beta-services-settings
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Settings/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=beta
+    expose:
+      - "5005"
+    ports:
+      - "5005:5005"
+    restart: unless-stopped
+    depends_on: 
+      - novanet-beta-redis
+      - novanet-beta-rabbitmq
+      - novanet-beta-mongodb
+    networks:
+      - default
+        
+  novanet-beta-services-sharing:
+    container_name: novanet-beta-services-sharing
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Sharing/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=beta
+    expose:
+      - "5006"
+    ports:
+      - "5006:5006"
+    restart: unless-stopped
+    depends_on:
+      - novanet-beta-redis
+      - novanet-beta-rabbitmq
+      - novanet-beta-mongodb
+    networks:
+      - default    
+        
+  novanet-beta-services-storage:
+    container_name: novanet-beta-services-storage
+    build:
+      context: ../../..
+      dockerfile: src/services/Service.Storage/Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=beta
+    expose:
+      - "5007"
+    ports:
+      - "5007:5007"
+    restart: unless-stopped
+    depends_on:
+      - novanet-beta-redis
+      - novanet-beta-rabbitmq
+      - novanet-beta-mongodb
+    networks:
+      - default
