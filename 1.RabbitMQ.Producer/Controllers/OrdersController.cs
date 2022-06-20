@@ -16,7 +16,7 @@ namespace _1.RabbitMQ.Producer.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateOrder(string? message)
         {
-            _messagePublisher.Publish("testQueue", message);
+            _messagePublisher.Publish("OrderLogService", message);
 
             return Ok(message);
         }
